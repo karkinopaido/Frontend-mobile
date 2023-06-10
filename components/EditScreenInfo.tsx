@@ -5,95 +5,108 @@ import { ExternalLink } from './ExternalLink';
 import { MonoText } from './StyledText';
 import { Feather, Entypo } from "@expo/vector-icons";
 
-
-import {ScrollView ,FlatList ,TouchableOpacity , Dimensions,StyleSheet,Text,View,Pressable,TextInput,KeyboardAvoidingView } from 'react-native';
+import {Image ,ScrollView ,FlatList ,TouchableOpacity , Dimensions,StyleSheet,Text,View,Pressable,TextInput,KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import SelectDropdown from 'react-native' ;
+import SelectDropdown from 'react-native-select-dropdown' ;
+import axios from "axios";
 export default function EditScreenInfo({ path }: { path: string }) {
   
-  const renderitem = null ;
-  const ItemData = [
-    {
-      id: 13,
-      name: 'b',
-      year:'2001',
-    },
-    {
-      id: 41,
-      name: 'a',
-      year:'1999',
-    },
-    {
-      id: 12,
-      name: 'c',
-      year:'4002',
-    },
-    {
-      id: 132,
-      name: 'd',
-      year:'2003',
-    },
-    {
-      id: 123123123123,
-      name: 'f',
-      year:'1820',
-    },
-    {
-      id: 44551,
-      name: 'e',
-      year:'1300',
-    },
-  ];
-
-
-  const ItemData2 = [
-    {
-      id: 'bd7acbea-c1b1-46c2-aed5-3ad53abb28ba',
-      name: 'giorgos',
-      year:'',
-    },
-    {
-      id: '3ac68afc-c605-48d3-a4f8-fbd91aa97f63',
-      name: 'aggelos',
-      year:'',
-    },
-    {
-      id: '58694a0f-3da1-471f-bd96-145571e29d72',
-      name: 'ilias',
-      year:'',
-    },
-  ];
+  //api
+  const api  = "http://www.omdbapi.com/?" ; 
+  const name  = 'matrix' ; 
+  //api key
+  const apiKey = "apikey=5387b024" ; 
 
   
-  const [listItems, setListItems] = useState(ItemData);
+
+ 
+  const [movies, setMovies] = useState([])
+
+  const getInfoformovies = () => {
+    axios.get( 'http://www.omdbapi.com/?apiKey=5387b024&s=BAtman&type=movie' )
+    .then((response) => {
+      if(response){
+        
+        setMovies(response.data.Search);
+      }
+    })
+
+    .catch((error) => {
+      console.log(error);
+    });
+  }
+ 
+  const getInfoforseries = () => {
+    axios.get( 'http://www.omdbapi.com/?apiKey=5387b024&s=MAma&type=series' )
+    .then((response) => {
+      if(response){
+        
+        setMovies(response.data.Search);
+      }
+    })
+
+    .catch((error) => {
+      console.log(error);
+    });
+  }
+
+
+  const getInfoforSearch = () => {
+    axios.get( 'http://www.omdbapi.com/?apiKey=5387b024&s='+ text )
+    .then((response) => {
+      if(response){
+        
+        setMovies(response.data.Search);
+      }
+    })
+
+    .catch((error) => {
+      console.log(error);
+    });
+  }
+    
+  
+  const renderItem = ({ item }) => (
+    <Item Poster={item.Poster} Title={item.Title} Year={item.Year} Rate={item.Rate}Type={item.Type}/>
+     
+  );
+  
+  const Item = ({Year ,  Title, Poster , Rate , Type }) => (
+    
+    <View style = {styles.moviewcontainer}>
+      <Image style={{width:100 , height: 130}}source = {{uri : Poster}} alt="" />
+      <View style={styles.info}>
+          <Text>Title : {Title}</Text>
+          <Text>Year : {Year}</Text>
+          <Text>Rate : {Rate}</Text>
+          <Text>Type : {Type}</Text>
+      </View>
+    </View>
+  );
+
+
+
   
   function SortByRating(){
-    ItemData.sort((a,b) => a.id > b.id ? 1 : -1);
-    setListItems(ItemData);
+    
+    movies.sort((a,b) => a.Rate > b.Rate ? 1 : -1);
+    movies.map(movie => (movie.Rate));
+    setMovies(movies);
   }
 
   function SortByAlphabetic(){
-    ItemData.sort((a,b) => a.name > b.name ? 1 : -1);
-    setListItems(ItemData);
+    movies.sort((a,b) => a.Title > b.Title ? 1 : -1);
+    movies.map(movie => (movie.Title));
+    setMovies(movies);
   }
 
   function SortByear(){
-    ItemData.sort((a,b) => a.year > b.year ? 1 : -1);
-    setListItems(ItemData);
+    movies.sort((a,b) => a.Year > b.Year ? 1 : -1);
+    movies.map(movie => (movie.Year));
+    setMovies(movies);
   }
 
-  const ItemView = ({item}) => {
-    return (
-      // FlatList Item
-      <View>
-        <Text onPress={() => getItem(item)}>
-          {item.name}
-          {item.id}
-          {item.year}
-        </Text>
-      </View>
-    );
-  };
+  
 
 
   const ItemSeparatorView = () => {
@@ -110,10 +123,7 @@ export default function EditScreenInfo({ path }: { path: string }) {
     );
   };    
  
-  const getItem = (item) => {
-    //Function for click on an item
-    alert('Id: ' + item.id + '\n Name: ' + item.name);
-  };
+  
 
 
   const [text, onChangeText] = React.useState('Search here');
@@ -121,17 +131,34 @@ export default function EditScreenInfo({ path }: { path: string }) {
 
   const Filters = ["Year", "A-Z", "Rate"]
   
+  function statemachine(num : any){
+      if(num == 0 ){
+        alert("year") ;
+        SortByear(); 
+      }else if(num == 1){
+        SortByAlphabetic();
+        alert("A-Z") ;
+      }else if(num == 2){
+        SortByRating();
+        alert("Rate") ;
+      }
+  }
+
+  function searchText(){
+    
+    getInfoforSearch();
+  }
 
   function press1(){
-    alert('You long-pressed the Movies button!');
-    setListItems(ItemData2);
-
+    //alert('You long-pressed the Movies button!');
+    getInfoformovies();
+    //alert(movies.map(movie => (movie.Title)));
   }
 
   function press2(){
+    getInfoforseries();
+    //alert('You long-pressed the Series button!');
     
-    alert('You long-pressed the Series button!');
-    SortByear();
     
   }
 
@@ -148,7 +175,7 @@ export default function EditScreenInfo({ path }: { path: string }) {
       </View>
 
       <View style={styles.searchbar}>
-      <Feather
+      <Feather onPress={()=>searchText()}
           name="search"
           size={20}
           color="black"
@@ -160,21 +187,34 @@ export default function EditScreenInfo({ path }: { path: string }) {
       
       <View>
         <View>
-              <Text style={styles.resultcontainer}>New Realeases</Text>
-              <View>
-                    
+              <Text style = { styles.resultcontainer}>New Realeases</Text>
+              <View >
+                <SelectDropdown  data={Filters} defaultButtonText={"Sort by"} buttonStyle = {styles.filter}
+                    onSelect={(selectedItem, index) => {
+                      statemachine(index)
+            
+                    }}
+                    buttonTextAfterSelection={(selectedItem, index) => {
+                      return selectedItem
+                    }}  
+                    rowTextForSelection={(item, index) => {
+                      return item
+                    }}
+                  
+                />
               </View>
 
         </View>
       </View>
-      <ScrollView>
-          <View style={styles.searchbarout} >{}
-            <FlatList style={styles.searchcontent}
-            data = {listItems} 
-            ItemSeparatorComponent={ItemSeparatorView}
-            renderItem={ ItemView}/>
-          </View>
-       
+      <ScrollView style={styles.searchbarout}>
+          <View>
+            
+            <FlatList
+        data={movies}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+      />
+          </View>        
       </ScrollView>
       
     </View >
@@ -238,7 +278,7 @@ const styles = StyleSheet.create({
     width :300 ,
     borderColor : 'blue' ,
     borderStyle : 'solid' ,
-    height : '80%', 
+    height : '90%', 
     borderRadius : 15 ,
     backgroundColor: 'white',
     opacity: 0.9
@@ -251,7 +291,34 @@ const styles = StyleSheet.create({
     fontSize : 18 ,
     fontStyle : 'italic' ,
     fontWeight: 'bold',
+  },
+  realeasrbar : {
+    textAlign : 'center'
+  },
+  filter : {
+    color :  'white' , 
+    fontSize : 15 , 
+    fontStyle : 'italic' ,
+    width : 130 ,
+    marginTop : 10 , 
+    backgroundColor: 'white',
+    opacity: 0.9 ,
+    borderStyle : 'solid' ,
+    borderRadius : 25 ,
+  },
+  moviewcontainer : {
+    opacity: 0.9 ,
+    borderRadius : 25 ,
+    backgroundColor : 'cyan' ,
+    marginRight : 15 ,
+    marginLeft : 25  ,
+    marginTop: 25 ,
+    alignItems : 'center' ,
+    flexDirection : 'row'
+  },
+  info: {
+    marginLeft : 15 ,
+    fontSize : 15 , 
+    fontStyle : 'italic' ,
   }
-  
-  
 });
