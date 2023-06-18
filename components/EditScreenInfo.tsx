@@ -5,10 +5,12 @@ import { ExternalLink } from './ExternalLink';
 import { MonoText } from './StyledText';
 import { Feather, Entypo } from "@expo/vector-icons";
 
-import {Image ,ScrollView ,FlatList ,TouchableOpacity , Dimensions,StyleSheet,Text,View,Pressable,TextInput,KeyboardAvoidingView } from 'react-native';
+import {Button , Image ,ScrollView ,FlatList ,TouchableOpacity , Dimensions,StyleSheet,Text,View,Pressable,TextInput,KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SelectDropdown from 'react-native-select-dropdown' ;
 import axios from "axios";
+import Dialog from "react-native-dialog";
+import Modal from "react-native-modal";
 export default function EditScreenInfo({ path }: { path: string }) {
   
   //api
@@ -17,10 +19,14 @@ export default function EditScreenInfo({ path }: { path: string }) {
   //api key
   const apiKey = "apikey=5387b024" ; 
 
-  
-
- 
+  const [moviePoster, setmoviePoster] = useState(" ")
+  const [movieLanguage, setmovieLanguage] = useState(" ")
+  const [movieGenre, setmovieGenre] = useState(" ")
+  const [movieDirector, setmovieDirector] = useState(" ")
+  const [movieTitle, setmovieTitle] = useState(" ")
+  const [movieActors, setmovieActors] = useState(" ")
   const [movies, setMovies] = useState([])
+  const [changedata , setchangedata] = useState([])
 
   const getInfoformovies = () => {
     axios.get( 'http://www.omdbapi.com/?apiKey=5387b024&s=BAtman&type=movie' )
@@ -66,14 +72,33 @@ export default function EditScreenInfo({ path }: { path: string }) {
   }
     
   
+  const getDetails = (imdbID) => {
+    //alert(imdbID);
+    axios.get('http://www.omdbapi.com/?apiKey=5387b024&i='+ imdbID).then((res) => {
+      if (res) {
+        setmovieTitle(res.data.Title)
+        setmovieActors(res.data.Actors)
+        setmovieDirector(res.data.Director)
+        setmovieLanguage(res.data.Language)
+        setmovieGenre(res.data.Genre)
+        setmoviePoster(res.data.Poster)
+        setModalVisible(true)
+      }
+    })
+  }
+
+
+
+
   const renderItem = ({ item }) => (
-    <Item Poster={item.Poster} Title={item.Title} Year={item.Year} Rate={item.Rate}Type={item.Type}/>
+    <Item imdbID={item.imdbID} Poster={item.Poster} Title={item.Title} Year={item.Year} Rate={item.Rate}Type={item.Type} />
      
   );
   
-  const Item = ({Year ,  Title, Poster , Rate , Type }) => (
-    
-    <View style = {styles.moviewcontainer}>
+  const Item = ({Year , Title , Poster , Rate , Type , imdbID}) => (
+
+    <TouchableOpacity onPress={()=>getDetails(imdbID)} >
+      <View style = {styles.moviewcontainer}  >
       <Image style={{width:100 , height: 130}}source = {{uri : Poster}} alt="" />
       <View style={styles.info}>
           <Text>Title : {Title}</Text>
@@ -82,28 +107,31 @@ export default function EditScreenInfo({ path }: { path: string }) {
           <Text>Type : {Type}</Text>
       </View>
     </View>
+    </TouchableOpacity>
+    
   );
 
-
-
+  const [isModalVisible, setModalVisible] = useState(false);
+  
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
   
   function SortByRating(){
     
-    movies.sort((a,b) => a.Rate > b.Rate ? 1 : -1);
-    movies.map(movie => (movie.Rate));
-    setMovies(movies);
+    setchangedata(movies.sort((a,b) => a.Rate > b.Rate ? 1 : -1));
+    setMovies(changedata);
+    
   }
 
   function SortByAlphabetic(){
-    movies.sort((a,b) => a.Title > b.Title ? 1 : -1);
-    movies.map(movie => (movie.Title));
-    setMovies(movies);
+    setchangedata(movies.sort((a,b) => a.Title > b.Title ? 1 : -1));
+    setMovies(changedata);
   }
 
   function SortByear(){
-    movies.sort((a,b) => a.Year > b.Year ? 1 : -1);
-    movies.map(movie => (movie.Year));
-    setMovies(movies);
+    setchangedata(movies.sort((a,b) => a.Year > b.Year ? 1 : -1));
+    setMovies(changedata);
   }
 
   
@@ -124,8 +152,6 @@ export default function EditScreenInfo({ path }: { path: string }) {
   };    
  
   
-
-
   const [text, onChangeText] = React.useState('Search here');
   const [anwser, anwserChange] = React.useState('');
 
@@ -133,14 +159,12 @@ export default function EditScreenInfo({ path }: { path: string }) {
   
   function statemachine(num : any){
       if(num == 0 ){
-        alert("year") ;
         SortByear(); 
       }else if(num == 1){
         SortByAlphabetic();
-        alert("A-Z") ;
       }else if(num == 2){
         SortByRating();
-        alert("Rate") ;
+        
       }
   }
 
@@ -150,21 +174,18 @@ export default function EditScreenInfo({ path }: { path: string }) {
   }
 
   function press1(){
-    //alert('You long-pressed the Movies button!');
     getInfoformovies();
-    //alert(movies.map(movie => (movie.Title)));
+    
   }
 
   function press2(){
     getInfoforseries();
-    //alert('You long-pressed the Series button!');
-    
     
   }
 
   return (
     <View  >
-      <View style={styles.getStartedContainer}>
+      <View style={styles.getStartedContainer} >
       <TouchableOpacity style = {styles.Pressablecontainer}  onPress={()=>press1()} >
             <Text style = {styles.buttonstyle}>Movies</Text>
       </TouchableOpacity>
@@ -186,7 +207,7 @@ export default function EditScreenInfo({ path }: { path: string }) {
       
       
       <View>
-        <View>
+        <View >
               <Text style = { styles.resultcontainer}>New Realeases</Text>
               <View >
                 <SelectDropdown  data={Filters} defaultButtonText={"Sort by"} buttonStyle = {styles.filter}
@@ -203,16 +224,47 @@ export default function EditScreenInfo({ path }: { path: string }) {
                   
                 />
               </View>
+                    
+              <View >
+              <Button title="Show Details" onPress={toggleModal} />
 
+              <Modal isVisible={isModalVisible} 
+                    style= {styles.madalocontainer}
+                    onBackdropPress={() => setModalVisible(false)}
+                    onSwipeComplete={() => setModalVisible(false)}
+                    swipeDirection="left"
+                    >   
+                    <View style={styles.infocontai}>
+                      <Image style={{width:270 , height: 240 , marginBottom : 15}}source = {{uri : moviePoster}} alt="" />
+                        <View>
+                        <Text>Title : {movieTitle}</Text>
+                        <Text>Actors : {movieActors}</Text>
+                        <Text>Director : {movieDirector}</Text>
+                        <Text>Genre : {movieGenre}</Text>
+                        <Text>Language : {movieLanguage}</Text>
+                        </View>
+                    </View>
+                        <View style= {styles.modalbutton}>
+                            <Button  title="Close" onPress={toggleModal}  />
+                        </View>
+                        
+                  </Modal>  
+                    
+              </View>
+                    
+              
         </View>
       </View>
       <ScrollView style={styles.searchbarout}>
-          <View>
+          <View >
             
             <FlatList
         data={movies}
+        extraData={movies}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        maxToRenderPerBatch={15}
+        
       />
           </View>        
       </ScrollView>
@@ -320,5 +372,18 @@ const styles = StyleSheet.create({
     marginLeft : 15 ,
     fontSize : 15 , 
     fontStyle : 'italic' ,
+  },madalocontainer:{
+    margin : 160 ,
+    marginLeft : 40 ,
+    alignItems : 'center' , 
+    width:320 ,
+    backgroundColor: 'white',
+    opacity: 0.9 ,
+    borderStyle : 'solid' ,
+    borderRadius : 25 ,
+  },modalbutton : {
+    marginTop : "15%" 
+  },infocontai : {
+    alignItems : 'center' , 
   }
 });
